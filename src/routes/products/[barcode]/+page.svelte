@@ -3,6 +3,7 @@
 	import { isConfigured as isPriceConfigured } from '$lib/api/prices';
 	import { isConfigured as isFolksonomyConfigured } from '$lib/api/folksonomy';
 	import { preferences } from '$lib/settings';
+	import { navigating } from '$app/state';
 
 	import EcoScore from '$lib/greenscore/GreenScore.svelte';
 	import KnowledgePanels from '$lib/knowledgepanels/Panels.svelte';
@@ -33,7 +34,7 @@
 
 <Card>
 	<div class="items-center gap-2 max-md:mb-4 max-md:text-center md:flex">
-		<h1 class="my-4 grow text-3xl font-bold md:text-4xl">
+		<h1 class="my-4 grow text-2xl font-bold md:text-4xl">
 			{product.product_name ?? product.code}
 		</h1>
 
@@ -46,13 +47,21 @@
 			See on OpenFoodFacts
 		</a>
 
-		<a href={`/products/${product.code}/edit`} class="btn btn-secondary max-sm:btn-sm ml-auto">
-			Edit
+		<a
+			href={`/products/${product.code}/edit`}
+			class="btn btn-secondary max-sm:btn-sm ml-auto"
+			class:pointer-events-none={navigating.to}
+		>
+			{#if navigating.to?.params?.barcode === product.code}
+				<span class="loading loading-ring loading-lg mx-auto my-auto"></span>
+			{:else}
+				Edit
+			{/if}
 		</a>
 	</div>
 
 	<div class="flex flex-col-reverse gap-4 md:flex-row">
-		<div class="grid h-max w-3/4 grid-cols-[max-content_1fr] gap-x-4 gap-y-1">
+		<div class="grid h-max w-full grid-cols-[max-content_1fr] gap-x-4 gap-y-1 md:w-3/4">
 			<span class="text-end font-bold">Quantity:</span>
 			<span>{product.quantity}</span>
 
@@ -70,14 +79,14 @@
 			</span>
 
 			<span class="text-end font-bold">Categories:</span>
-			<span>
+			<span class="flex flex-wrap gap-1">
 				{#await data.taxo.categories}
 					Loading...
 				{:then categories}
 					{#each product.categories_tags as tag, i}
-						{#if i > 0},
-						{/if}
-						<a class="link" href={'/taxo/categories/' + tag}
+						<a
+							class="link bg-secondary mr-0.5 inline-block break-inside-avoid rounded-xl px-2 font-semibold text-black no-underline"
+							href="/taxo/categories/{tag}"
 							>{categories[tag] != null ? getOrDefault(categories[tag].name, lang) : tag}</a
 						>
 					{/each}
@@ -111,6 +120,36 @@
 					{/each}
 				{/await}
 			</span>
+
+			<span class="text-end font-bold">Countries:</span>
+			<span>
+				{#await data.taxo.countries}
+					Loading...
+				{:then countries}
+					{#each product.countries_tags as tag, i}
+						{#if i > 0},
+						{/if}
+						<a class="link" href={'/taxo/countries/' + tag}>
+							{countries[tag] != null ? getOrDefault(countries[tag].name, lang) : tag}
+						</a>
+					{/each}
+				{/await}
+			</span>
+
+			<span class="text-end font-bold">Origins:</span>
+			<span>
+				{#await data.taxo.origins}
+					Loading...
+				{:then origins}
+					{#each product.origins_tags as tag, i}
+						{#if i > 0},
+						{/if}
+						<a class="link" href={'/taxo/origin/' + tag}>
+							{origins[tag] != null ? getOrDefault(origins[tag].name, lang) : tag}
+						</a>
+					{/each}
+				{/await}
+			</span>
 		</div>
 
 		<div class="flex max-h-56 grow justify-center">
@@ -122,7 +161,7 @@
 <div class="flex w-full justify-evenly gap-4 p-3">
 	<NutriScore grade={product.nutriscore_grade} />
 	<Nova grade={product.nova_group} />
-	<a href="#nutriscore">
+	<a href="#environment_card">
 		<EcoScore grade={product.ecoscore_grade} />
 	</a>
 </div>
@@ -147,7 +186,7 @@
 
 {#if isPriceConfigured() && data?.prices?.data != null}
 	<Card>
-		<h1 class="my-4 text-4xl font-bold">
+		<h1 class="my-4 text-xl font-bold sm:text-4xl">
 			Open prices <span class="font-light italic">(alpha)</span>
 		</h1>
 
@@ -159,7 +198,7 @@
 	{#await data?.questions}
 		Loading...
 	{:then questions}
-		<h1 class="my-4 text-4xl font-bold">Questions</h1>
+		<h1 class="my-4 text-2xl font-bold sm:text-4xl">Questions</h1>
 
 		<Debug data={questions} />
 	{/await}
